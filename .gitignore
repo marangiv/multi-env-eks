@@ -1,0 +1,62 @@
+# Ignora i file di configurazione locali di Terraform
+*.tfstate
+*.tfstate.*
+
+# Ignora i file di backup di Terraform
+*.backup
+
+# Ignora i log di crash di Terraform
+crash.log
+
+# Ignora i file di override di Terraform
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignora le directory di configurazione locali di Terraform
+.terraform/
+**/.terraform/*
+
+# Ignora i file di configurazione personali
+.terraformrc
+.terraformrc.tvars
+
+# Ignora i file di variabili sensibili
+*.tfvars
+*.tfvars.json
+
+# Ignora i file di pianificazione di Terraform
+*.tfplan
+
+# Ignora i file di configurazione di editor comuni
+.vscode/
+.idea/
+*.swp
+*.bak
+*.tmp
+
+# Ignora i file di sistema operativi
+.DS_Store
+Thumbs.db
+
+# Ignora i file di log
+*.log
+
+# Ignora i file binari
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
+
+# Ignora i file di configurazione di Python virtual environment
+venv/
+
+kubeconfig-eu-west-1
+kubeconfig-us-east-1
+kubeconfig-us-west-2
+
+kubectl
+kubectl.sha256
+token.json

@@ -1,21 +1,23 @@
+# Define required providers and their versions
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 5.0"  # Use AWS provider version 5.x
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.0"
+      version = "~> 2.0"  # Use Helm provider version 2.x
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
+      version = "~> 2.0"  # Use Kubernetes provider version 2.x
     }
   }
 }
 
-# Define AWS providers for each region
+# Define AWS provider configurations for each region
+# These allow resources to be created in specific regions
 provider "aws" {
   alias  = "us-west-2"
   region = "us-west-2"
@@ -32,6 +34,7 @@ provider "aws" {
 }
 
 # Fetch EKS cluster data for each region
+# This data will be used to configure Kubernetes and Helm providers
 data "aws_eks_cluster" "eks_us_west_2" {
   provider = aws.us-west-2
   name     = var.cluster_us_west_2_name
@@ -63,6 +66,7 @@ data "aws_eks_cluster_auth" "eks_eu_west_1" {
 }
 
 # Configure Kubernetes providers for each region
+# These providers will be used to interact with the EKS clusters
 provider "kubernetes" {
   alias                  = "us_west_2"
   host                   = data.aws_eks_cluster.eks_us_west_2.endpoint
@@ -85,6 +89,7 @@ provider "kubernetes" {
 }
 
 # Configure Helm Providers for each region
+# These providers will be used to deploy Helm charts to the EKS clusters
 provider "helm" {
   alias = "us_west_2"
   kubernetes {
@@ -112,15 +117,8 @@ provider "helm" {
   }
 }
 
-# locals {
-#   clusters = {
-#     us_west_2 = var.cluster_us_west_2_name
-#     us_east_1 = var.cluster_us_east_1_name
-#     eu_west_1 = var.cluster_eu_west_1_name
-#   }
-# }
-
-# Argo CD Helm Releases
+# Deploy Argo CD using Helm to each EKS cluster
+# This sets up Argo CD in each region for GitOps-based deployments
 resource "helm_release" "argocd_us_west_2" {
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"
@@ -154,19 +152,69 @@ resource "helm_release" "argocd_eu_west_1" {
   provider = helm.eu_west_1
 }
 
-resource "aws_lb" "argocd" {
-  name               = "argocd-lb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [var.security_group_id]
-  subnets            = var.subnets
+# Create a security group for the Application Load Balancer (ALB)
+# This security group controls inbound and outbound traffic for the ALB
+resource "aws_security_group" "alb" {
+  name        = "argocd-alb-sg"
+  description = "Security group for ArgoCD ALB"
+  vpc_id      = var.vpc_ids["us-west-2"]  # Using us-west-2 as the primary VPC
 
-  enable_deletion_protection = false
+  # Allow inbound HTTP traffic
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow inbound HTTPS traffic
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow all outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "argocd-alb-sg"
+  }
 }
 
+# Fetch subnet IDs for the ALB
+# This data source retrieves all subnet IDs in the specified VPC
+data "aws_subnets" "selected" {
+  filter {
+    name   = "vpc-id"
+    values = [var.vpc_ids["us-west-2"]]  # Using us-west-2 as the primary VPC
+  }
+}
 
-# Target Groups
-# Data sources per i VPC
+# Create the Application Load Balancer (ALB)
+# This ALB will distribute traffic across the Argo CD instances in different regions
+resource "aws_lb" "argocd" {
+  name               = "argocd-lb"
+  internal           = false  # Internet-facing
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb.id]
+  subnets            = data.aws_subnets.selected.ids
+
+  enable_deletion_protection = false
+
+  tags = {
+    Name = "argocd-lb"
+  }
+}
+
+# Fetch VPC data for each region
+# This data will be used to create target groups in each VPC
 data "aws_vpc" "us_west_2" {
   provider = aws.us-west-2
   id       = var.vpc_ids["us-west-2"]
@@ -182,7 +230,8 @@ data "aws_vpc" "eu_west_1" {
   id       = var.vpc_ids["eu-west-1"]
 }
 
-# Target Groups
+# Create target groups for each region
+# These target groups will be used by the ALB to route traffic to the Argo CD instances
 resource "aws_lb_target_group" "argocd_us_west_2" {
   provider    = aws.us-west-2
   name        = "argocd-tg-${var.environment}-us-west-2"
@@ -231,7 +280,8 @@ resource "aws_lb_target_group" "argocd_eu_west_1" {
   }
 }
 
-# ALB Listener
+# Create an ALB Listener
+# This listener routes incoming traffic to the appropriate target group
 resource "aws_lb_listener" "argocd" {
   load_balancer_arn = aws_lb.argocd.arn
   port              = 80
@@ -255,3 +305,7 @@ resource "aws_lb_listener" "argocd" {
     }
   }
 }
+
+# Note: This configuration sets up a multi-region Argo CD deployment with a single ALB.
+# Consider adding HTTPS support and AWS Certificate Manager for production use.
+# Also, you may want to add Route53 records for DNS management.

@@ -42,15 +42,15 @@ variable "environment" {
   type        = string
 }
 
-variable "security_group_id" {
-  description = "Security group ID for the ALB"
-  type        = string
-}
+# variable "security_group_id" {
+#   description = "Security group ID for the ALB"
+#   type        = string
+# }
 
-variable "subnets" {
-  description = "Subnets for the ALB"
-  type        = list(string)
-}
+# variable "subnets" {
+#   description = "Subnets for the ALB"
+#   type        = list(string)
+# }
 
 variable "argocd_chart_version" {
   description = "Version of the Argo CD Helm chart to install"

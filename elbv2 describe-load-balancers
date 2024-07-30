@@ -1,0 +1,17 @@
+{
+    "subnetIds": [
+        "subnet-01e0612b040bba771",
+        "subnet-078bb3ec14e6bd9ec",
+        "subnet-079a7ed183eaac4d1"
+    ],
+    "securityGroupIds": [
+        "sg-0f016ed227cd6db5c"
+    ],
+    "clusterSecurityGroupId": "sg-0b780b535ddf9bfb9",
+    "vpcId": "vpc-01df2733cd92394f4",
+    "endpointPublicAccess": true,
+    "endpointPrivateAccess": true,
+    "publicAccessCidrs": [
+        "0.0.0.0/0"
+    ]
+}

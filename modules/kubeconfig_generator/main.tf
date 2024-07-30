@@ -1,3 +1,9 @@
+/*
+The resource takes input variables for the cluster names, endpoints, 
+and certificate authority data for three regions: 
+us-west-2, us-east-1, and eu-west-1.
+*/
+
 resource "terraform_data" "generate_kubeconfig_and_diagnose" {
   input = {
     us_west_2_cluster_name = var.us_west_2_cluster_name
@@ -11,7 +17,28 @@ resource "terraform_data" "generate_kubeconfig_and_diagnose" {
     eu_west_1_cert_auth_data = var.eu_west_1_cert_auth_data
   }
 
+/*
+The triggers_replace attribute uses the current timestamp to force the execution 
+of the provisioner whenever the timestamp changes. 
+This ensures that the kubeconfig files and diagnostics are generated anew each time the resource is applied.
+*/
+
   triggers_replace = timestamp()
+
+/*
+This resource uses a local-exec provisioner to execute a custom script 
+that generates kubeconfig files for multiple AWS EKS clusters and runs
+ a diagnostics script if it exists.
+*/
+
+/*
+The local-exec provisioner runs a shell script that performs the following actions:
+Creates directories kubectl_configs and diagnostic_logs.
+Defines a function 'generate_kubeconfig' to create a kubeconfig file for a given region using the provided cluster details.
+
+Calls generate_kubeconfig for each of the specified regions (us-west-2, us-east-1, and eu-west-1).
+Checks for the existence of a script named run_diagnostics.sh and executes it if found.
+*/
 
   provisioner "local-exec" {
     command = <<-EOT

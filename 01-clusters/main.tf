@@ -8,8 +8,8 @@ terraform {
   }
 }
 
-# Definizione dei provider AWS per ogni regione
-# Ogni provider ha un alias unico che useremo per riferirci ad esso
+# Defining AWS providers for each region.
+# Each provider has a unique alias that we will use to refer to it.
 provider "aws" {
   alias  = "us-west-2"
   region = "us-west-2"
@@ -32,7 +32,7 @@ locals {
   }
 }
 
-# Modulo VPC per la regione us-west-2
+# VPC module for the us-west-2 region.
 module "vpc_us_west_2" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.9"
@@ -52,13 +52,13 @@ module "vpc_us_west_2" {
     Region      = "us-west-2"
   }
 
-  # Specifichiamo quale provider AWS usare per questo modulo
+  # We specify which AWS provider to use for this module.
   providers = {
     aws = aws.us-west-2
   }
 }
 
-# Modulo EKS per la regione us-west-2
+# EKS module for the us-west-2 region.
 module "eks_us_west_2" {
   source = "../modules/eks"
 
@@ -75,13 +75,13 @@ module "eks_us_west_2" {
 
   cluster_addons = var.cluster_addons
 
-  # Specifichiamo quale provider AWS usare per questo modulo
+# We specify which AWS provider to use for this module.
   providers = {
     aws = aws.us-west-2
   }
 }
 
-# Modulo VPC per la regione us-east-1
+# VPC module for the us-east-1 region.
 module "vpc_us_east_1" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.9"
@@ -106,7 +106,7 @@ module "vpc_us_east_1" {
   }
 }
 
-# Modulo EKS per la regione us-east-1
+# EKS module for the us-east-1 region.
 module "eks_us_east_1" {
   source = "../modules/eks"
 
@@ -128,7 +128,7 @@ module "eks_us_east_1" {
   }
 }
 
-# Modulo VPC per la regione eu-west-1
+# VPC module for eu-west-1 region.
 module "vpc_eu_west_1" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.9"
@@ -153,7 +153,7 @@ module "vpc_eu_west_1" {
   }
 }
 
-# Modulo EKS per la regione eu-west-1
+# EKS module for the eu-west-1 region.
 module "eks_eu_west_1" {
   source = "../modules/eks"
 
